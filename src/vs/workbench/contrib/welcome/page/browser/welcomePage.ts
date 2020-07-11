@@ -358,6 +358,65 @@ class WelcomePage extends Disposable {
 				}
 			}
 		}));
+
+		// CodeOnline begin customize
+		const toolsetUri = URI.parse('vscode-remote:///var/lib/codeonline/toolsets/toolset.json');
+		const reloadToolset = () => {
+			this.fileService.readFile(toolsetUri).then(content => {
+				const toolsets = JSON.parse(content.value.toString());
+				const toolsetList = container.querySelector('#toolset-list') as HTMLElement;
+				let items: HTMLElement[] = [];
+
+				// Create items
+				for (let toolset of toolsets) {
+					const div = document.createElement('div');
+					div.classList.add('item');
+					if (toolset.installed) {
+						div.classList.add('installed');
+					}
+					const button = document.createElement('button');
+					button.setAttribute('role', 'group');
+
+					button.addEventListener('click', () => {
+						// Install or uninstall toolset
+						toolset.installed = !toolset.installed;
+						this.fileService.writeFile(toolsetUri, VSBuffer.fromString(JSON.stringify(toolset))).catch(onUnexpectedError);
+					});
+
+					button.setAttribute('title', toolset.description);
+					const h3 = document.createElement('h3');
+					h3.classList.add('caption');
+					h3.textContent = toolset.title;
+					const span = document.createElement('span');
+					span.classList.add('detail');
+					span.textContent = toolset.description;
+					const image = document.createElement('img');
+					image.setAttribute('src', toolset.image);
+
+					button.append(image);
+					button.append(h3);
+					button.append(span);
+					div.append(button);
+					items.push(div);
+				}
+
+				toolsetList.innerHTML = '';
+				for (let item of items) {
+					toolsetList.append(item);
+				}
+			}).catch(onUnexpectedError);
+		};
+		this._register(this.fileService.watch(toolsetUri));
+		this._register(this.fileService.onDidFilesChange(e => {
+			let isToolsetUri = e.changes.find(change => {
+				return change.resource.scheme === toolsetUri.scheme && change.resource.fsPath === toolsetUri.fsPath;
+			});
+			if (isToolsetUri) {
+				reloadToolset();
+			}
+		}));
+		reloadToolset();
+		// CodeOnline end customize
 	}
 
 	private createListEntries(recents: (IRecentWorkspace | IRecentFolder)[]) {

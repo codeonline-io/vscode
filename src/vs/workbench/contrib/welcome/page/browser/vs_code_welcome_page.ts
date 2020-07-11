@@ -14,6 +14,12 @@ export default () => `
 			<p class="subtitle detail">${escape(localize({ key: 'welcomePage.editingEvolved', comment: ['Shown as subtitle on the Welcome page.'] }, "Editing evolved"))}</p>
 		</div>
 		<div class="row">
+		<div class="commands">
+			<div class="section customize">
+				<h2 class="caption">Toolsets</h2>
+				<div class="list" id="toolset-list">
+				</div>
+			</div>
 			<div class="splash">
 				<div class="section start">
 					<h2 class="caption">${escape(localize('welcomePage.start', "Start"))}</h2>
