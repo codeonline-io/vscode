@@ -127,6 +127,7 @@ export class ExtensionService extends AbstractExtensionService implements IExten
 
 		} else {
 			// remote: only enabled and none-web'ish extension
+			localExtensions.push(...remoteEnv.extensions.filter(extension => this._isEnabled(extension) && canExecuteOnWeb(extension, this._productService, this._configService)));
 			remoteEnv.extensions = remoteEnv.extensions.filter(extension => this._isEnabled(extension) && !canExecuteOnWeb(extension, this._productService, this._configService));
 			this._checkEnableProposedApi(remoteEnv.extensions);
 

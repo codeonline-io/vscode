@@ -364,10 +364,15 @@
 			if (!csp) {
 				host.postMessage('no-csp-found');
 			} else {
-				try {
-					csp.setAttribute('content', host.rewriteCSP(csp.getAttribute('content'), data.endpoint));
-				} catch (e) {
-					console.error(`Could not rewrite csp: ${e}`);
+				// Rewrite vscode-resource in csp
+				if (data.endpoint) {
+					try {
+						const endpointUrl = new URL(data.endpoint);
+						// NOTE@coder: Add back the trailing slash so it'll work for sub-paths.
+						csp.setAttribute('content', csp.getAttribute('content').replace(/vscode-resource:(?=(\s|;|$))/g, endpointUrl.origin + "/"));
+					} catch (e) {
+						console.error('Could not rewrite csp');
+					}
 				}
 			}
 

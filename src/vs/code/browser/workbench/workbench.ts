@@ -12,6 +12,8 @@ import { request } from 'vs/base/parts/request/browser/request';
 import { isFolderToOpen, isWorkspaceToOpen } from 'vs/platform/windows/common/windows';
 import { isEqual } from 'vs/base/common/resources';
 import { isStandalone } from 'vs/base/browser/browser';
+import { Schemas } from 'vs/base/common/network';
+import { encodePath } from 'vs/server/node/util';
 
 interface ICredential {
 	service: string;
@@ -242,12 +244,18 @@ class WorkspaceProvider implements IWorkspaceProvider {
 
 		// Folder
 		else if (isFolderToOpen(workspace)) {
-			targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_FOLDER}=${encodeURIComponent(workspace.folderUri.toString())}`;
+			const target = workspace.folderUri.scheme === Schemas.vscodeRemote
+				? encodePath(workspace.folderUri.path)
+				: encodeURIComponent(workspace.folderUri.toString());
+			targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_FOLDER}=${target}`;
 		}
 
 		// Workspace
 		else if (isWorkspaceToOpen(workspace)) {
-			targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_WORKSPACE}=${encodeURIComponent(workspace.workspaceUri.toString())}`;
+			const target = workspace.workspaceUri.scheme === Schemas.vscodeRemote
+				? encodePath(workspace.workspaceUri.path)
+				: encodeURIComponent(workspace.workspaceUri.toString());
+			targetHref = `${document.location.origin}${document.location.pathname}?${WorkspaceProvider.QUERY_PARAM_WORKSPACE}=${target}`;
 		}
 
 		// Append payload if any
@@ -287,7 +295,22 @@ class WorkspaceProvider implements IWorkspaceProvider {
 		throw new Error('Missing web configuration element');
 	}
 
-	const config: IWorkbenchConstructionOptions & { folderUri?: UriComponents, workspaceUri?: UriComponents } = JSON.parse(configElementAttribute);
+	const config: IWorkbenchConstructionOptions & { folderUri?: UriComponents, workspaceUri?: UriComponents } = {
+		webviewEndpoint: `${window.location.origin}${window.location.pathname.replace(/\/+$/, '')}/webview`,
+		...JSON.parse(configElementAttribute),
+	};
+
+	// Strip the protocol from the authority if it exists.
+	const normalizeAuthority = (authority: string): string => authority.replace(/^https?:\/\//, "");
+	if (config.remoteAuthority) {
+		(config as any).remoteAuthority = normalizeAuthority(config.remoteAuthority);
+	}
+	if (config.workspaceUri && config.workspaceUri.authority) {
+		config.workspaceUri.authority = normalizeAuthority(config.workspaceUri.authority);
+	}
+	if (config.folderUri && config.folderUri.authority) {
+		config.folderUri.authority = normalizeAuthority(config.folderUri.authority);
+	}
 
 	// Revive static extension locations
 	if (Array.isArray(config.staticExtensions)) {
@@ -299,40 +322,7 @@ class WorkspaceProvider implements IWorkspaceProvider {
 	// Find workspace to open and payload
 	let foundWorkspace = false;
 	let workspace: IWorkspace;
-	let payload = Object.create(null);
-
-	const query = new URL(document.location.href).searchParams;
-	query.forEach((value, key) => {
-		switch (key) {
-
-			// Folder
-			case WorkspaceProvider.QUERY_PARAM_FOLDER:
-				workspace = { folderUri: URI.parse(value) };
-				foundWorkspace = true;
-				break;
-
-			// Workspace
-			case WorkspaceProvider.QUERY_PARAM_WORKSPACE:
-				workspace = { workspaceUri: URI.parse(value) };
-				foundWorkspace = true;
-				break;
-
-			// Empty
-			case WorkspaceProvider.QUERY_PARAM_EMPTY_WINDOW:
-				workspace = undefined;
-				foundWorkspace = true;
-				break;
-
-			// Payload
-			case WorkspaceProvider.QUERY_PARAM_PAYLOAD:
-				try {
-					payload = JSON.parse(value);
-				} catch (error) {
-					console.error(error); // possible invalid JSON
-				}
-				break;
-		}
-	});
+	let payload = config.workspaceProvider?.payload || Object.create(null);
 
 	// If no workspace is provided through the URL, check for config attribute from server
 	if (!foundWorkspace) {

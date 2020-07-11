@@ -65,6 +65,9 @@ export interface IEnvironmentService {
 	disableTelemetry: boolean;
 	serviceMachineIdResource: URI;
 
+	// NOTE@coder: vscodevim makes use of this.
+	globalStorageHome: string;
+
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	// NOTE: DO NOT ADD ANY OTHER PROPERTY INTO THE COLLECTION HERE
 	// UNLESS THIS PROPERTY IS SUPPORTED BOTH IN WEB AND DESKTOP!!!!

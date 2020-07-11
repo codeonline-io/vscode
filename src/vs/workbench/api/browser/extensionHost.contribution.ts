@@ -60,6 +60,7 @@ import './mainThreadComments';
 import './mainThreadNotebook';
 import './mainThreadTask';
 import './mainThreadLabelService';
+import 'vs/server/browser/mainThreadNodeProxy';
 import './mainThreadTunnelService';
 import './mainThreadAuthentication';
 import './mainThreadTimeline';

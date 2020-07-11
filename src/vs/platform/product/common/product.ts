@@ -26,6 +26,12 @@ if (isWeb) {
 			urlProtocol: 'code-oss'
 		});
 	}
+	// NOTE@coder: Add the ability to inject settings from the server.
+	const el = document.getElementById('vscode-remote-product-configuration');
+	const rawProductConfiguration = el && el.getAttribute('data-settings');
+	if (rawProductConfiguration) {
+		Object.assign(product, JSON.parse(rawProductConfiguration));
+	}
 }
 
 // Node: AMD loader

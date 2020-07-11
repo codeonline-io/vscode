@@ -5,17 +5,17 @@
 
 import { createChannelSender } from 'vs/base/parts/ipc/common/ipc';
 import { ILocalizationsService } from 'vs/platform/localizations/common/localizations';
-import { ISharedProcessService } from 'vs/platform/ipc/electron-browser/sharedProcessService';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
+import { IRemoteAgentService } from 'vs/workbench/services/remote/common/remoteAgentService';
 
 export class LocalizationsService {
 
 	declare readonly _serviceBrand: undefined;
 
 	constructor(
-		@ISharedProcessService sharedProcessService: ISharedProcessService,
+		@IRemoteAgentService remoteAgentService: IRemoteAgentService,
 	) {
-		return createChannelSender<ILocalizationsService>(sharedProcessService.getChannel('localizations'));
+		return createChannelSender<ILocalizationsService>(remoteAgentService.getConnection()!.getChannel('localizations'));
 	}
 }
 

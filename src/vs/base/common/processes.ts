@@ -110,7 +110,8 @@ export function sanitizeProcessEnvironment(env: IProcessEnvironment, ...preserve
 		/^ELECTRON_.+$/,
 		/^GOOGLE_API_KEY$/,
 		/^VSCODE_.+$/,
-		/^SNAP(|_.*)$/
+		/^SNAP(|_.*)$/,
+		/^CODE_SERVER_.+$/,
 	];
 	const envKeys = Object.keys(env);
 	envKeys

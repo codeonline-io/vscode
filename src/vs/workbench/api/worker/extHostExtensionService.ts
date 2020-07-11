@@ -8,6 +8,9 @@ import { ExtensionActivationTimesBuilder } from 'vs/workbench/api/common/extHost
 import { AbstractExtHostExtensionService } from 'vs/workbench/api/common/extHostExtensionService';
 import { URI } from 'vs/base/common/uri';
 import { RequireInterceptor } from 'vs/workbench/api/common/extHostRequireInterceptor';
+import { joinPath } from 'vs/base/common/resources';
+import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
+import { loadCommonJSModule } from 'vs/server/browser/worker';
 
 class WorkerRequireInterceptor extends RequireInterceptor {
 
@@ -40,7 +43,14 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 		await this._fakeModules.install();
 	}
 
-	protected async _loadCommonJSModule<T>(module: URI, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T> {
+	protected async _loadCommonJSModule<T>(module: URI | IExtensionDescription, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T> {
+		if (!URI.isUri(module) && module.extensionKind !== 'web') {
+			return loadCommonJSModule(module, activationTimesBuilder, this._nodeProxy, this._logService, this._fakeModules!.getModule('vscode', module.extensionLocation));
+		}
+
+		if (!URI.isUri(module)) {
+			module = joinPath(module.extensionLocation, module.main!);
+		}
 
 		module = module.with({ path: ensureSuffix(module.path, '.js') });
 		const response = await fetch(module.toString(true));
@@ -57,7 +67,7 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 		const _exports = {};
 		const _module = { exports: _exports };
 		const _require = (request: string) => {
-			const result = this._fakeModules!.getModule(request, module);
+			const result = this._fakeModules!.getModule(request, <URI>module);
 			if (result === undefined) {
 				throw new Error(`Cannot load module '${request}'`);
 			}

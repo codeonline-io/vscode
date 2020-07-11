@@ -42,6 +42,9 @@
     "eslint": "eslint -c .eslintrc.json --rulesdir ./build/lib/eslint --ext .ts --ext .js ./src/vs ./extensions"
   },
   "dependencies": {
+    "@coder/logger": "^1.1.12",
+    "@coder/node-browser": "^1.0.8",
+    "@coder/requirefs": "^1.1.5",
     "applicationinsights": "1.0.8",
     "chokidar": "3.2.3",
     "graceful-fs": "4.2.3",

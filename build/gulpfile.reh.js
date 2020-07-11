@@ -52,6 +52,7 @@ gulp.task('vscode-reh-web-linux-x64-min', noop);
 gulp.task('vscode-reh-web-linux-alpine-min', noop);
 
 function getNodeVersion() {
+	return process.versions.node
 	const yarnrc = fs.readFileSync(path.join(REPO_ROOT, 'remote', '.yarnrc'), 'utf8');
 	const target = /^target "(.*)"$/m.exec(yarnrc)[1];
 	return target;

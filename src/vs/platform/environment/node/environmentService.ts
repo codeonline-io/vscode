@@ -38,8 +38,9 @@ export interface INativeEnvironmentService extends IEnvironmentService {
 	extensionsPath?: string;
 	extensionsDownloadPath: string;
 	builtinExtensionsPath: string;
+	extraExtensionPaths: string[];
+	extraBuiltinExtensionPaths: string[];
 
-	globalStorageHome: string;
 	workspaceStorageHome: string;
 
 	driverHandle?: string;
@@ -179,6 +180,13 @@ export class EnvironmentService implements INativeEnvironmentService {
 		}
 
 		return resources.joinPath(this.userHome, product.dataFolderName, 'extensions').fsPath;
+	}
+
+	@memoize get extraExtensionPaths(): string[] {
+		return (this._args['extra-extensions-dir'] || []).map((p) => <string>parsePathArg(p, process));
+	}
+	@memoize get extraBuiltinExtensionPaths(): string[] {
+		return (this._args['extra-builtin-extensions-dir'] || []).map((p) => <string>parsePathArg(p, process));
 	}
 
 	@memoize

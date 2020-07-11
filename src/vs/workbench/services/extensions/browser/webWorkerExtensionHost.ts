@@ -152,7 +152,7 @@ export class WebWorkerExtensionHost implements IExtensionHost {
 				appLanguage: platform.language,
 				extensionDevelopmentLocationURI: this._environmentService.extensionDevelopmentLocationURI,
 				extensionTestsLocationURI: this._environmentService.extensionTestsLocationURI,
-				globalStorageHome: URI.parse('fake:globalStorageHome'), //todo@joh URI.file(this._environmentService.globalStorageHome),
+				globalStorageHome: URI.file(this._environmentService.globalStorageHome),
 				userHome: URI.parse('fake:userHome'), //todo@joh URI.file(this._environmentService.userHome),
 				webviewResourceRoot: this._environmentService.webviewResourceRoot,
 				webviewCspSource: this._environmentService.webviewCspSource,

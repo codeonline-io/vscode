@@ -25,6 +25,8 @@ export interface IBuiltInExtension {
 export type ConfigurationSyncStore = { url: string, authenticationProviders: IStringDictionary<{ scopes: string[] }> };
 
 export interface IProductConfiguration {
+	readonly codeServerVersion?: string;
+
 	readonly version: string;
 	readonly date?: string;
 	readonly quality?: string;

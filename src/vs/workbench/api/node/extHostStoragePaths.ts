@@ -5,13 +5,14 @@
 
 import * as path from 'vs/base/common/path';
 import { URI } from 'vs/base/common/uri';
-import * as pfs from 'vs/base/node/pfs';
-import { IEnvironment, IStaticWorkspaceData } from 'vs/workbench/api/common/extHost.protocol';
+import { IEnvironment, IStaticWorkspaceData, MainContext } from 'vs/workbench/api/common/extHost.protocol';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
 import { IExtensionStoragePaths } from 'vs/workbench/api/common/extHostStoragePaths';
 import { IExtHostInitDataService } from 'vs/workbench/api/common/extHostInitDataService';
 import { withNullAsUndefined } from 'vs/base/common/types';
 import { ILogService } from 'vs/platform/log/common/log';
+import { IExtHostRpcService } from '../common/extHostRpcService';
+import { VSBuffer } from 'vs/base/common/buffer';
 
 export class ExtensionStoragePaths implements IExtensionStoragePaths {
 
@@ -26,6 +27,7 @@ export class ExtensionStoragePaths implements IExtensionStoragePaths {
 	constructor(
 		@IExtHostInitDataService initData: IExtHostInitDataService,
 		@ILogService private readonly _logService: ILogService,
+		@IExtHostRpcService private readonly _extHostRpc: IExtHostRpcService,
 	) {
 		this._workspace = withNullAsUndefined(initData.workspace);
 		this._environment = initData.environment;
@@ -54,21 +56,26 @@ export class ExtensionStoragePaths implements IExtensionStoragePaths {
 		const storageName = this._workspace.id;
 		const storagePath = path.join(this._environment.appSettingsHome.fsPath, 'workspaceStorage', storageName);
 
-		const exists = await pfs.dirExists(storagePath);
-
-		if (exists) {
+		// NOTE@coder: Use the file system proxy so this will work in the browser.
+		const fileSystem = this._extHostRpc.getProxy(MainContext.MainThreadFileSystem);
+		try {
+			await fileSystem.$stat(URI.file(storagePath));
 			return storagePath;
+		} catch (error) {
+			// Doesn't exist.
 		}
 
 		try {
-			await pfs.mkdirp(storagePath);
-			await pfs.writeFile(
-				path.join(storagePath, 'meta.json'),
-				JSON.stringify({
-					id: this._workspace.id,
-					configuration: this._workspace.configuration && URI.revive(this._workspace.configuration).toString(),
-					name: this._workspace.name
-				}, undefined, 2)
+			// NOTE@coder: $writeFile performs a mkdirp.
+			await fileSystem.$writeFile(
+				URI.file(path.join(storagePath, 'meta.json')),
+				VSBuffer.fromString(
+					JSON.stringify({
+						id: this._workspace.id,
+						configuration: this._workspace.configuration && URI.revive(this._workspace.configuration).toString(),
+						name: this._workspace.name
+					}, undefined, 2)
+				)
 			);
 			return storagePath;
 

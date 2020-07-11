@@ -13,6 +13,8 @@ import { ExtHostDownloadService } from 'vs/workbench/api/node/extHostDownloadSer
 import { CLIServer } from 'vs/workbench/api/node/extHostCLIServer';
 import { URI } from 'vs/base/common/uri';
 import { Schemas } from 'vs/base/common/network';
+import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
+import { joinPath } from 'vs/base/common/resources';
 
 class NodeModuleRequireInterceptor extends RequireInterceptor {
 
@@ -76,7 +78,10 @@ export class ExtHostExtensionService extends AbstractExtHostExtensionService {
 		};
 	}
 
-	protected _loadCommonJSModule<T>(module: URI, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T> {
+	protected _loadCommonJSModule<T>(module: URI | IExtensionDescription, activationTimesBuilder: ExtensionActivationTimesBuilder): Promise<T> {
+		if (!URI.isUri(module)) {
+			module = joinPath(module.extensionLocation, module.main!);
+		}
 		if (module.scheme !== Schemas.file) {
 			throw new Error(`Cannot load URI: '${module}', must be of file-scheme`);
 		}

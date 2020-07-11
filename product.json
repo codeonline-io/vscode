@@ -20,7 +20,7 @@
 	"darwinBundleIdentifier": "com.visualstudio.code.oss",
 	"linuxIconName": "com.visualstudio.code.oss",
 	"licenseFileName": "LICENSE.txt",
-	"reportIssueUrl": "https://github.com/Microsoft/vscode/issues/new",
+	"reportIssueUrl": "https://github.com/cdr/code-server/issues/new",
 	"urlProtocol": "code-oss",
 	"extensionAllowedProposedApi": [
 		"ms-vscode.vscode-js-profile-flame",
