@@ -25,7 +25,6 @@ import { ExtensionStoragePaths } from 'vs/workbench/api/node/extHostStoragePaths
 import { IExtHostTunnelService, ExtHostTunnelService } from 'vs/workbench/api/common/extHostTunnelService';
 import { IExtHostApiDeprecationService, ExtHostApiDeprecationService, } from 'vs/workbench/api/common/extHostApiDeprecationService';
 import { IExtHostWindow, ExtHostWindow } from 'vs/workbench/api/common/extHostWindow';
-import { NotImplementedProxy } from 'vs/base/common/types';
 
 // register singleton services
 registerSingleton(ILogService, ExtHostLogService);
