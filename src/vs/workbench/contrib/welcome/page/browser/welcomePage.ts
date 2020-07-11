@@ -26,7 +26,7 @@ import { getInstalledExtensions, IExtensionStatus, onExtensionChanged, isKeymapE
 import { IExtensionManagementService, IExtensionGalleryService, ILocalExtension } from 'vs/platform/extensionManagement/common/extensionManagement';
 import { IWorkbenchExtensionEnablementService, EnablementState, IExtensionRecommendationsService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
 import { ILifecycleService, StartupKind } from 'vs/platform/lifecycle/common/lifecycle';
-import { Disposable } from 'vs/base/common/lifecycle';
+import { Disposable, IDisposable } from 'vs/base/common/lifecycle';
 import { splitName } from 'vs/base/common/labels';
 import { registerThemingParticipant } from 'vs/platform/theme/common/themeService';
 import { registerColor, focusBorder, textLinkForeground, textLinkActiveForeground, foreground, descriptionForeground, contrastBorder, activeContrastBorder } from 'vs/platform/theme/common/colorRegistry';
@@ -46,6 +46,7 @@ import { IHostService } from 'vs/workbench/services/host/browser/host';
 import { IProductService } from 'vs/platform/product/common/productService';
 import { IEditorOptions } from 'vs/platform/editor/common/editor';
 import { IWorkbenchLayoutService } from 'vs/workbench/services/layout/browser/layoutService';
+import { VSBuffer } from 'vs/base/common/buffer';
 
 const configurationKey = 'workbench.startupEditor';
 const oldConfigurationKey = 'workbench.welcome.enabled';
@@ -280,7 +281,7 @@ class WelcomePage extends Disposable {
 		@ITelemetryService private readonly telemetryService: ITelemetryService,
 		@IHostService private readonly hostService: IHostService,
 		@IProductService private readonly productService: IProductService,
-
+		@IFileService private readonly fileService: IFileService
 	) {
 		super();
 		this._register(lifecycleService.onShutdown(() => this.dispose()));
@@ -358,6 +359,65 @@ class WelcomePage extends Disposable {
 				}
 			}
 		}));
+
+		// CodeOnline begin customize
+		const toolsetUri = URI.parse('vscode-remote:///var/lib/codeonline/toolsets/toolset.json');
+		const reloadToolset = () => {
+			this.fileService.readFile(toolsetUri).then(content => {
+				const toolsets = JSON.parse(content.value.toString());
+				const toolsetList = container.querySelector('#toolbar-list') as HTMLElement;
+				let items: HTMLElement[] = [];
+
+				// Create items
+				for (let toolset of toolsets) {
+					const div = document.createElement('div');
+					div.classList.add('item');
+					if (toolset.installed) {
+						div.classList.add('installed');
+					}
+					const button = document.createElement('button');
+					button.setAttribute('role', 'group');
+
+					button.addEventListener('click', () => {
+						// Install or uninstall toolset
+						toolset.installed = !toolset.installed;
+						this.fileService.writeFile(toolsetUri, VSBuffer.fromString(JSON.stringify(toolset))).catch(onUnexpectedError);
+					});
+
+					button.setAttribute('title', toolset.description);
+					const h3 = document.createElement('h3');
+					h3.classList.add('caption');
+					h3.textContent = toolset.title;
+					const span = document.createElement('span');
+					span.classList.add('detail');
+					span.textContent = toolset.description;
+					const image = document.createElement('img');
+					image.setAttribute('src', toolset.image);
+
+					button.append(image);
+					button.append(h3);
+					button.append(span);
+					div.append(button);
+					items.push(div);
+				}
+
+				toolsetList.innerHTML = '';
+				for (let item of items) {
+					toolsetList.append(item);
+				}
+			}).catch(onUnexpectedError);
+		};
+		this._register(this.fileService.watch(toolsetUri));
+		this._register(this.fileService.onDidFilesChange(e => {
+			let isToolsetUri = e.changes.find(change => {
+				return change.resource.scheme === toolsetUri.scheme && change.resource.fsPath === toolsetUri.fsPath;
+			});
+			if (isToolsetUri) {
+				reloadToolset();
+			}
+		}));
+		reloadToolset();
+		// CodeOnline end customize
 	}
 
 	private createListEntries(recents: (IRecentWorkspace | IRecentFolder)[]) {
